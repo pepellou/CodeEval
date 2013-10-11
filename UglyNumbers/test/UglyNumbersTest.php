@@ -21,6 +21,7 @@ class UglyNumbersTest extends PHPUnit_Framework_TestCase {
 		    array("9", 1),
 		    array("011", 6),
 		    array("12345", 64),
+		    array("111301", 179),
 		    array("123456", 199),
 		    array("1234567", 541),
 		    array("12345678", 1746),

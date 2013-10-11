@@ -45,6 +45,8 @@ class State {
     public $restToSolve;
     public $updatedResult;
 
+    public $hash;
+
     public function __construct(
         $toSolve,
         $totalLength,
@@ -62,6 +64,8 @@ class State {
 
         $this->nextDigit = $this->toSolve[$this->currentPos];
         $this->updatedResult = $this->currentResult + $this->currentSign * ($this->currentOperator . $this->nextDigit);
+
+        $this->hash = "$currentResult|$currentPos|$currentOperator|$currentSign";
     }
 
     public function noop(
@@ -128,6 +132,8 @@ class UglyCounter {
 
 class StateExplorer {
 
+    private static $cache = array();
+
     private $counter;
 
     public function __construct(
@@ -139,13 +145,33 @@ class StateExplorer {
     public function explore(
         $state
     ) {
-        if ($state->isFinal()) {
-            $this->counter->check($state->updatedResult);
+        if (isset(self::$cache[$state->hash])) {
+            $this->counter->count += self::$cache[$state->hash];
             return;
         }
-        $this->explore($state->noop());
-        $this->explore($state->plus());
-        $this->explore($state->minus());
+
+        $countBefore = $this->counter->count;
+        $this->processState($state);
+        $countAfter = $this->counter->count;
+
+        self::$cache[$state->hash] = $countAfter - $countBefore;
+    }
+
+    private function processState(
+        $state
+    ) {
+        if ($state->isFinal()) {
+            $this->counter->check($state->updatedResult);
+        } else {
+            $this->explore($state->noop());
+            $this->explore($state->plus());
+            $this->explore($state->minus());
+        }
+    }
+
+    public static function clearCache(
+    ) {
+        self::$cache = array();
     }
 
 }
@@ -158,6 +184,7 @@ class UglyNumbers {
         $digits
     ) {
         self::initCounter();
+        StateExplorer::clearCache();
         $solver = new StateExplorer(self::$counter);
         $solver->explore(new State($digits, strlen($digits)));
         return self::$counter->count;
