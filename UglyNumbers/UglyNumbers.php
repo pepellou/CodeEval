@@ -141,10 +141,19 @@ class StateExplorer {
 
 }
 
+class UglyNumbers {
+
+    public static function solve(
+        $digits
+    ) {
+        $counter = new UglyCounter();
+        $solver = new StateExplorer($counter);
+        $solver->explore(new State($digits));
+        return $counter->count;
+    }
+
+}
 
 foreach (file($argv[1]) as $digits) {
-    $counter = new UglyCounter();
-    $solver = new StateExplorer($counter);
-    $solver->explore(new State(trim($digits)));
-    echo $counter->count."\n";
+    echo UglyNumbers::solve(trim($digits)) . "\n";
 }
