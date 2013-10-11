@@ -35,28 +35,43 @@ function Is($what) {
 class State {
 
     public $toSolve;
+    public $totalLength;
+    public $currentPos = 0;
     public $currentResult = 0;
     public $currentOperator = "";
     public $currentSign = 1;
 
+    public $nextDigit;
+    public $restToSolve;
+    public $updatedResult;
+
     public function __construct(
         $toSolve,
+        $totalLength,
+        $currentPos = 0,
         $currentResult = 0,
         $currentOperator = "",
         $currentSign = 1
     ) {
         $this->toSolve = $toSolve;
+        $this->totalLength = $totalLength;
+        $this->currentPos = $currentPos;
         $this->currentResult = $currentResult;
         $this->currentOperator = $currentOperator;
         $this->currentSign = $currentSign;
+
+        $this->nextDigit = $this->toSolve[$this->currentPos];
+        $this->updatedResult = $this->currentResult + $this->currentSign * ($this->currentOperator . $this->nextDigit);
     }
 
     public function noop(
     ) {
         return new State(
-            $this->restToSolve(),
+            $this->toSolve,
+            $this->totalLength,
+            $this->currentPos + 1,
             $this->currentResult, 
-            $this->currentOperator.$this->nextDigit(),
+            $this->currentOperator.$this->nextDigit,
             $this->currentSign
         );
     }
@@ -64,8 +79,10 @@ class State {
     public function plus(
     ) {
         return new State(
-            $this->restToSolve(),
-            $this->updatedResult(),
+            $this->toSolve,
+            $this->totalLength,
+            $this->currentPos + 1,
+            $this->updatedResult,
             "", 
             1
         );
@@ -74,31 +91,18 @@ class State {
     public function minus(
     ) {
         return new State(
-            $this->restToSolve(),
-            $this->updatedResult(),
+            $this->toSolve,
+            $this->totalLength,
+            $this->currentPos + 1,
+            $this->updatedResult,
             "",
             -1
         );
     }
 
-    private function restToSolve(
-    ) {
-        return substr($this->toSolve, 1);
-    }
-
-    public function updatedResult(
-    ) {
-        return $this->currentResult + $this->currentSign * ($this->currentOperator . $this->nextDigit());
-    }
-
-    private function nextDigit(
-    ) {
-        return $this->toSolve[0];
-    }
-
     public function isFinal(
     ) {
-        return $this->restToSolve() == "";
+        return $this->currentPos == $this->totalLength - 1;
     }
 
 }
@@ -131,7 +135,7 @@ class StateExplorer {
         $state
     ) {
         if ($state->isFinal()) {
-            $this->counter->check($state->updatedResult());
+            $this->counter->check($state->updatedResult);
             return;
         }
         $this->explore($state->noop());
@@ -148,7 +152,7 @@ class UglyNumbers {
     ) {
         $counter = new UglyCounter();
         $solver = new StateExplorer($counter);
-        $solver->explore(new State($digits));
+        $solver->explore(new State($digits, strlen($digits)));
         return $counter->count;
     }
 
