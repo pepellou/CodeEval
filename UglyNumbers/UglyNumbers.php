@@ -111,10 +111,15 @@ class UglyCounter {
 
     public $count = 0;
 
+    private $cache = array();
+
     public function check(
         $number
     ) {
-        if (Is($number)->ugly()) {
+        if (!isset($this->cache[$number])) {
+            $this->cache[$number] = Is($number)->ugly();
+        }
+        if ($this->cache[$number]) {
             $this->count++;
         }
     }
@@ -147,13 +152,24 @@ class StateExplorer {
 
 class UglyNumbers {
 
+    private static $counter = NULL;
+
     public static function solve(
         $digits
     ) {
-        $counter = new UglyCounter();
-        $solver = new StateExplorer($counter);
+        self::initCounter();
+        $solver = new StateExplorer(self::$counter);
         $solver->explore(new State($digits, strlen($digits)));
-        return $counter->count;
+        return self::$counter->count;
+    }
+
+    private static function initCounter(
+    ) {
+        if (is_null(self::$counter)) {
+            self::$counter = new UglyCounter();
+        } else {
+            self::$counter->count = 0;
+        }
     }
 
 }
